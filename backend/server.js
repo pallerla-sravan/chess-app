@@ -12,9 +12,8 @@ const io = require("socket.io")(http, {
 
 app.use(cors());
 
-// ✅ Test route to verify backend is running
 app.get("/", (req, res) => {
-  res.send("Backend is running! sravan");
+  res.send("Backend is running!");
 });
 
 const rooms = {};
