@@ -1,4 +1,3 @@
-
 // const express = require("express");
 // const app = express();
 // const http = require("http").createServer(app);
@@ -24,12 +23,12 @@
 //       rooms[roomId].push(socket.id);
 //       socket.join(roomId);
 //       socket.emit("assignColor", color);
-//       console.log(`User joined room: ${roomId} as ${color}`);
+//       console.log(`User joined room ${roomId} as ${color}`);
 //     }
 //   });
 
 //   socket.on("move", ({ roomId, move }) => {
-//     io.to(roomId).emit("opponentMove", move);
+//     socket.to(roomId).emit("opponentMove", move); 
 //   });
 
 //   socket.on("disconnect", () => {
@@ -50,21 +49,23 @@
 
 
 
-
-
-
-
-
-
-// server.js
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const http = require("http").createServer(app);
+
 const io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5173", // Update this to your frontend URL on deployment
     methods: ["GET", "POST"],
   },
+});
+
+app.use(cors());
+
+// ✅ Test route to verify backend is running
+app.get("/", (req, res) => {
+  res.send("Backend is running!");
 });
 
 const rooms = {};
@@ -87,7 +88,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("move", ({ roomId, move }) => {
-    socket.to(roomId).emit("opponentMove", move); 
+    socket.to(roomId).emit("opponentMove", move);
   });
 
   socket.on("disconnect", () => {
