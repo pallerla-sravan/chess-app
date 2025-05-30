@@ -5,7 +5,7 @@ const http = require("http").createServer(app);
 
 const io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:5173", // Update this to your frontend URL on deployment
+    origin: "https://chess-app-3hsx.onrender.com", // Update this to your frontend URL on deployment
     methods: ["GET", "POST"],
   },
 });
