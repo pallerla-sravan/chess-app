@@ -65,7 +65,7 @@ app.use(cors());
 
 // ✅ Test route to verify backend is running
 app.get("/", (req, res) => {
-  res.send("Backend is running!");
+  res.send("Backend is running! sravan");
 });
 
 const rooms = {};

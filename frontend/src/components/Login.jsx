@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import GameModes from "./GameModes";
 import { GoogleAuthProvider, signInWithPopup , onAuthStateChanged, createUserWithEmailAndPassword} from "firebase/auth";
@@ -10,8 +9,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const {user, setUser, auth} = useFirebase()
-  // const navigate = useNavigate();
-
   const provider = new GoogleAuthProvider();
 
   useEffect(()=>{
@@ -22,7 +19,9 @@ export default function Login() {
 
   const handleEmailLogin = () => {
     if (email.trim() && password.trim()) {
-      createUserWithEmailAndPassword(auth, email, password).then((usercre)=>{console.log(usercre)}).catch((error)=>{
+      createUserWithEmailAndPassword(auth, email, password).then((usercre)=>{
+        console.log(usercre.user)
+        setUser(usercre.user)}).catch((error)=>{
         console.log(error)
       })
     }
@@ -32,7 +31,6 @@ export default function Login() {
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log("Google sign-in successful:", result.user.displayName);
-        // navigate("/gamemods");
       })
       .catch((error) => {
         console.error("Google sign-in error:", error);

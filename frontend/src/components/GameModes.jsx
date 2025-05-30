@@ -74,7 +74,7 @@ export default function GameModes() {
 
                 <div className="flex items-center text-gray-300 hover:text-white transition-colors duration-200">
                   <img
-                    src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg"
+                    src="https://cdn-icons-png.flaticon.com/128/4322/4322991.png"
                     alt="User Avatar"
                     className="w-7 h-7 rounded-full mr-2 border border-white/20"
                   />

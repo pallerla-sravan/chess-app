@@ -1,196 +1,22 @@
-
-// import { useState, useEffect } from "react";
-// import { Chess } from "chess.js";
-// import { Chessboard } from "react-chessboard";
-// import io from "socket.io-client";
-// import { motion } from "framer-motion";
-// import { UserGroupIcon } from "@heroicons/react/24/outline";
-
-// const socket = io("http://localhost:5001");
-
-// export default function Online() {
-//   const [game, setGame] = useState(new Chess());
-//   const [roomId, setRoomId] = useState("");
-//   const [playerColor, setPlayerColor] = useState(null);
-//   const [joined, setJoined] = useState(false);
-//   const [selectedSquare, setSelectedSquare] = useState("");
-//   const [validMoves, setValidMoves] = useState([]);
-
-//   useEffect(() => {
-//     socket.on("opponentMove", (move) => {
-//       const newGame = new Chess(game.fen());
-//       newGame.move(move);
-//       setGame(newGame);
-//     });
-
-//     socket.on("assignColor", (color) => {
-//       setPlayerColor(color);
-//       setJoined(true);
-//     });
-
-//     return () => {
-//       socket.off("opponentMove");
-//       socket.off("assignColor");
-//     };
-//   }, [game]);
-
-//   const handleSquareClick = (square) => {
-//     if (game.isGameOver() || !joined || playerColor[0] !== game.turn()[0]) return;
-
-//     if (selectedSquare) {
-//       const move = {
-//         from: selectedSquare,
-//         to: square,
-//         promotion: "q",
-//       };
-
-//       try {
-//         const gameCopy = new Chess(game.fen());
-//         const result = gameCopy.move(move);
-
-//         if (result) {
-//           setGame(gameCopy);
-//           socket.emit("move", { roomId, move: result });
-//           setSelectedSquare("");
-//           setValidMoves([]);
-//         }
-//       } catch {
-//         setSelectedSquare("");
-//         setValidMoves([]);
-//       }
-//     } else {
-//       const piece = game.get(square);
-//       if (piece && piece.color === playerColor[0]) {
-//         const moves = game.moves({ square, verbose: true });
-//         setSelectedSquare(square);
-//         setValidMoves(moves.map((m) => m.to));
-//       }
-//     }
-//   };
-
-//   const joinRoom = () => {
-//     if (roomId.trim()) {
-//       socket.emit("joinRoom", roomId);
-//     }
-//   };
-
-//   const customSquareStyles = {
-//     ...(selectedSquare && {
-//       [selectedSquare]: {
-//         backgroundColor: "rgba(255, 255, 0, 0.4)",
-//       },
-//     }),
-//     ...validMoves.reduce((acc, curr) => {
-//       acc[curr] = {
-//         background:
-//           "radial-gradient(circle, rgba(255,100,100,0.3) 25%, transparent 25%)",
-//         borderRadius: "50%",
-//       };
-//       return acc;
-//     }, {}),
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
-//       <div className="max-w-4xl mx-auto">
-//         {!joined ? (
-//           <motion.div
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             className="mb-6 flex flex-col items-center bg-white/5 p-6 rounded-xl backdrop-blur-sm"
-//           >
-//             <motion.div
-//               initial={{ opacity: 0, y: -20 }}
-//               animate={{ opacity: 1, y: 0 }}
-//               className="flex items-center justify-between mb-8 p-4 bg-white/5 rounded-xl backdrop-blur-sm"
-//             >
-//               <div className="flex items-center gap-4">
-//                 <UserGroupIcon className="w-8 h-8 text-blue-400" />
-//                 <h1 className="text-2xl font-bold text-white">Online Chess Room</h1>
-//               </div>
-//             </motion.div>
-//             <input
-//               type="text"
-//               value={roomId}
-//               onChange={(e) => setRoomId(e.target.value)}
-//               placeholder="Enter Room ID"
-//               className="mb-4 px-4 py-2 border border-gray-600 rounded text-white bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-//             />
-//             <button
-//               onClick={joinRoom}
-//               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-all"
-//             >
-//               Join Room
-//             </button>
-//           </motion.div>
-//         ) : (
-//           <div className="w-full">
-//             <div className="flex items-center justify-between mb-8 p-4 bg-white/5 rounded-xl backdrop-blur-sm">
-//               <div className="flex items-center gap-4">
-//                 <UserGroupIcon className="w-8 h-8 text-blue-400" />
-//                 <h1 className="text-2xl font-bold text-white">Online Chess</h1>
-//               </div>
-//               <div className="text-blue-400">Room ID: {roomId}</div>
-//             </div>
-
-//             <div className="flex flex-col items-center">
-//               <Chessboard
-//                 position={game.fen()}
-//                 onSquareClick={handleSquareClick}
-//                 arePiecesDraggable={false}
-//                 customSquareStyles={customSquareStyles}
-//                 boardOrientation={playerColor}
-//                 boardWidth={560}
-//                 customBoardStyle={{
-//                   borderRadius: "12px",
-//                   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-//                 }}
-//                 customDarkSquareStyle={{ backgroundColor: "#1f2937" }}
-//                 customLightSquareStyle={{ backgroundColor: "#374151" }}
-//               />
-
-//               <div className="mt-6 p-4 bg-white/5 rounded-xl backdrop-blur-sm text-center w-full">
-//                 <div className="text-xl font-semibold text-blue-400">
-//                   {game.isGameOver()
-//                     ? game.isCheckmate()
-//                       ? game.turn() === "w"
-//                         ? "Black Wins by Checkmate!"
-//                         : "White Wins by Checkmate!"
-//                       : game.isDraw()
-//                       ? "Game Drawn!"
-//                       : "Game Over"
-//                     : game.inCheck()
-//                     ? `${game.turn() === "w" ? "White" : "Black"} is in Check`
-//                     : `${game.turn() === "w" ? "White" : "Black"} to move`}
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-
-import { useState, useEffect, useRef , useContext} from "react";
+import { useState, useEffect, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import io from "socket.io-client";
 import { motion } from "framer-motion";
-import { UserGroupIcon } from "@heroicons/react/24/outline";
-import {useFirebase} from "../context/User"
-import {getFirestore} from "firebase/firestore"
 import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  onSnapshot
-} from "firebase/firestore";
+  UserGroupIcon,
+  MicrophoneIcon,
+  VideoCameraIcon,
+  XMarkIcon,
+  NoSymbolIcon,
+  ArrowPathIcon
+} from "@heroicons/react/24/outline";
+import { useFirebase } from "../context/User";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 
-
-const socket = io("http://localhost:5001");
+const socket = io("https://chess-app-b7dl.onrender.com", {
+  transports: ["websocket"],
+});
 
 export default function Online() {
   const [game, setGame] = useState(new Chess());
@@ -200,8 +26,11 @@ export default function Online() {
   const [selectedSquare, setSelectedSquare] = useState("");
   const [validMoves, setValidMoves] = useState([]);
   const [status, setStatus] = useState("Disconnected");
-  const {app} = useFirebase()
-  const db = getFirestore(app)
+  const [gameOver, setGameOver] = useState(false);
+  const [gameStatus, setGameStatus] = useState("Waiting for opponent...");
+
+  const { app } = useFirebase();
+  const db = getFirestore(app);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -210,9 +39,12 @@ export default function Online() {
   const remoteStream = useRef(new MediaStream());
   const candidatesCollection = useRef(null);
 
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+
   const mediaConstraints = {
     video: true,
-    audio: true
+    audio: true,
   };
 
   useEffect(() => {
@@ -220,7 +52,9 @@ export default function Online() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
         localStream.current = stream;
-        localVideoRef.current.srcObject = stream;
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
       } catch (err) {
         console.error("Failed to get media:", err);
       }
@@ -229,10 +63,49 @@ export default function Online() {
     initMedia();
 
     return () => {
-      localStream.current?.getTracks().forEach(track => track.stop());
+      localStream.current?.getTracks().forEach((track) => track.stop());
       peerConnection.current?.close();
     };
   }, []);
+
+  // Check game status whenever game state changes
+  useEffect(() => {
+    if (!game) return;
+
+    if (game.isCheckmate()) {
+      const winner = game.turn() === "w" ? "Black" : "White";
+      const winMessage = playerColor 
+        ? (winner === playerColor ? "You Win!" : "Opponent Wins!")
+        : `${winner} Wins!`;
+      setGameStatus(`${winMessage} by Checkmate!`);
+      setGameOver(true);
+    } else if (game.isDraw()) {
+      setGameStatus("Game Drawn!");
+      setGameOver(true);
+    } else if (game.isCheck()) {
+      setGameStatus(`${game.turn() === "w" ? "White" : "Black"} is in Check`);
+      setGameOver(false);
+    } else {
+      setGameStatus(`${game.turn() === "w" ? "White" : "Black"} to move`);
+      setGameOver(false);
+    }
+  }, [game, playerColor]);
+
+  const toggleVideo = () => {
+    if (!localStream.current) return;
+    localStream.current.getVideoTracks().forEach(track => {
+      track.enabled = !track.enabled;
+    });
+    setIsVideoEnabled(prev => !prev);
+  };
+
+  const toggleAudio = () => {
+    if (!localStream.current) return;
+    localStream.current.getAudioTracks().forEach(track => {
+      track.enabled = !track.enabled;
+    });
+    setIsAudioEnabled(prev => !prev);
+  };
 
   useEffect(() => {
     if (!joined) return;
@@ -245,6 +118,7 @@ export default function Online() {
 
     socket.on("assignColor", (color) => {
       setPlayerColor(color);
+      setGameStatus(color === "white" ? "Your turn (White)" : "Waiting for opponent...");
     });
 
     return () => {
@@ -254,14 +128,10 @@ export default function Online() {
   }, [joined, game]);
 
   const handleSquareClick = (square) => {
-    if (game.isGameOver() || !joined || playerColor[0] !== game.turn()[0]) return;
+    if (gameOver || !joined || !playerColor || playerColor[0] !== game.turn()[0]) return;
 
     if (selectedSquare) {
-      const move = {
-        from: selectedSquare,
-        to: square,
-        promotion: "q"
-      };
+      const move = { from: selectedSquare, to: square, promotion: "q" };
 
       try {
         const gameCopy = new Chess(game.fen());
@@ -287,28 +157,42 @@ export default function Online() {
     }
   };
 
-  const joinRoom = async () => {
-    if (!roomId.trim()) return;
-
-    socket.emit("joinRoom", roomId);
-    setJoined(true);
-    setStatus("Joining Room...");
-    await setupWebRTC(roomId, false);
+  const resetGame = () => {
+    const newGame = new Chess();
+    setGame(newGame);
+    setGameOver(false);
+    setGameStatus(playerColor === "white" ? "Your turn (White)" : "Waiting for opponent...");
+    socket.emit("resetGame", { roomId });
   };
 
-  const createPeerConnection = () => {
-    const config = {
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  useEffect(() => {
+    if (!joined) return;
+
+    socket.on("gameReset", () => {
+      const newGame = new Chess();
+      setGame(newGame);
+      setGameOver(false);
+      setGameStatus(playerColor === "white" ? "Your turn (White)" : "Waiting for opponent...");
+    });
+
+    return () => {
+      socket.off("gameReset");
     };
+  }, [joined, playerColor]);
+
+  const createPeerConnection = () => {
+    const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
     peerConnection.current = new RTCPeerConnection(config);
 
-    localStream.current.getTracks().forEach(track =>
+    localStream.current.getTracks().forEach((track) =>
       peerConnection.current.addTrack(track, localStream.current)
     );
 
     peerConnection.current.ontrack = (event) => {
       remoteStream.current = event.streams[0];
-      remoteVideoRef.current.srcObject = remoteStream.current;
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream.current;
+      }
     };
 
     peerConnection.current.onicecandidate = (event) => {
@@ -342,13 +226,12 @@ export default function Online() {
 
       const answerCandidates = collection(db, "calls", roomId, "answerCandidates");
       onSnapshot(answerCandidates, (snapshot) => {
-        snapshot.docChanges().forEach(change => {
+        snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             peerConnection.current.addIceCandidate(new RTCIceCandidate(change.doc.data()));
           }
         });
       });
-
     } else {
       candidatesCollection.current = collection(db, "calls", roomId, "answerCandidates");
 
@@ -360,7 +243,7 @@ export default function Online() {
 
       const offerCandidates = collection(db, "calls", roomId, "offerCandidates");
       onSnapshot(offerCandidates, (snapshot) => {
-        snapshot.docChanges().forEach(change => {
+        snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             peerConnection.current.addIceCandidate(new RTCIceCandidate(change.doc.data()));
           }
@@ -377,34 +260,35 @@ export default function Online() {
     await setupWebRTC(roomId, true);
   };
 
-  const toggleMedia = (type) => {
-    const track = localStream.current?.getTracks().find((t) => t.kind === type);
-    if (track) track.enabled = !track.enabled;
+  const joinRoom = async () => {
+    if (!roomId.trim()) return;
+    socket.emit("joinRoom", roomId);
+    setJoined(true);
+    setStatus("Joining Room...");
+    await setupWebRTC(roomId, false);
   };
 
   const customSquareStyles = {
     ...(selectedSquare && {
-      [selectedSquare]: {
-        backgroundColor: "rgba(255, 255, 0, 0.4)"
-      }
+      [selectedSquare]: { backgroundColor: "rgba(255, 255, 0, 0.4)" },
     }),
     ...validMoves.reduce((acc, curr) => {
       acc[curr] = {
         background: "radial-gradient(circle, rgba(255,100,100,0.3) 25%, transparent 25%)",
-        borderRadius: "50%"
+        borderRadius: "50%",
       };
       return acc;
-    }, {})
+    }, {}),
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-8 text-white">
+      <div className="max-w-6xl mx-auto">
         {!joined ? (
           <motion.div className="mb-6 flex flex-col items-center bg-white/5 p-6 rounded-xl backdrop-blur-sm">
             <div className="flex items-center gap-4 mb-6">
               <UserGroupIcon className="w-8 h-8 text-blue-400" />
-              <h1 className="text-2xl font-bold text-white">Online Chess Room</h1>
+              <h1 className="text-2xl font-bold">Online Chess Room</h1>
             </div>
             <input
               type="text"
@@ -423,53 +307,104 @@ export default function Online() {
             </div>
           </motion.div>
         ) : (
-          <div>
-            <div className="flex justify-between items-center mb-6 p-4 bg-white/5 rounded-xl text-white">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
               <div className="flex items-center gap-4">
                 <UserGroupIcon className="w-8 h-8 text-blue-400" />
-                <h2 className="text-xl font-semibold">Room: {roomId}</h2>
+                <h2 className="text-xl font-semibold">Room ID: {roomId}</h2>
               </div>
-              <div>Status: {status}</div>
+              <div className="flex items-center gap-4">
+                <div className={`text-sm ${
+                  status === "connected" ? "text-green-400" : 
+                  status === "disconnected" ? "text-red-400" : 
+                  "text-yellow-400"
+                }`}>
+                  Connection: {status}
+                </div>
+                {gameOver && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={resetGame}
+                    className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-all flex items-center gap-1"
+                  >
+                    <ArrowPathIcon className="w-4 h-4" />
+                    Rematch
+                  </motion.button>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="flex flex-col items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="w-full flex justify-center relative">
                 <Chessboard
                   position={game.fen()}
                   onSquareClick={handleSquareClick}
                   arePiecesDraggable={false}
                   customSquareStyles={customSquareStyles}
                   boardOrientation={playerColor}
-                  boardWidth={520}
-                  customBoardStyle={{ borderRadius: "12px", boxShadow: "0 0 20px rgba(0,0,0,0.5)" }}
+                  boardWidth={560}
+                  customBoardStyle={{
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+                  }}
                   customDarkSquareStyle={{ backgroundColor: "#1f2937" }}
                   customLightSquareStyle={{ backgroundColor: "#374151" }}
                 />
-                <div className="mt-4 text-blue-400 text-center font-medium">
-                  {game.isGameOver()
-                    ? game.isCheckmate()
-                      ? game.turn() === "w" ? "Black Wins" : "White Wins"
-                      : "Game Over"
-                    : `${game.turn() === "w" ? "White" : "Black"} to move`}
-                </div>
+                {gameOver && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 bg-black/70 rounded-xl flex items-center justify-center"
+                  >
+                    <div className="text-center p-6 bg-gray-800/90 rounded-lg">
+                      <div className={`text-3xl font-bold mb-4 ${
+                        gameStatus.includes("Win") ? "text-green-400 animate-pulse" : 
+                        gameStatus.includes("Draw") ? "text-yellow-400" : 
+                        "text-white"
+                      }`}>
+                        {gameStatus}
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={resetGame}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all flex items-center gap-2 mx-auto"
+                      >
+                        <ArrowPathIcon className="w-5 h-5" />
+                        Play Again
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
-              <div className="space-y-4">
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                </div>
-                <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                </div>
-                <div className="flex justify-between gap-4">
-                  <button onClick={() => toggleMedia("video")} className="flex-1 py-2 bg-yellow-500 text-white rounded">
-                    Toggle Video
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <video ref={remoteVideoRef} autoPlay playsInline className="w-full rounded-xl shadow" />
+                <div className="flex gap-4">
+                  <button onClick={toggleVideo} className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 flex items-center gap-2">
+                    {isVideoEnabled ? <VideoCameraIcon className="w-5 h-5" /> : <NoSymbolIcon className="w-5 h-5" />}
+                    {isVideoEnabled ? "Turn Video Off" : "Turn Video On"}
                   </button>
-                  <button onClick={() => toggleMedia("audio")} className="flex-1 py-2 bg-red-500 text-white rounded">
-                    Toggle Audio
+                  <button onClick={toggleAudio} className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600 flex items-center gap-2">
+                    {isAudioEnabled ? <MicrophoneIcon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+                    {isAudioEnabled ? "Mute" : "Unmute"}
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div className={`mt-4 text-center text-xl font-semibold ${
+              gameStatus.includes("Win") ? "text-green-400" : 
+              gameStatus.includes("Check") ? "text-red-400" : 
+              "text-blue-400"
+            }`}>
+              {gameStatus}
+              {playerColor && !gameOver && (
+                <div className="text-sm text-gray-400 mt-1">
+                  You're playing as {playerColor}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -477,8 +412,3 @@ export default function Online() {
     </div>
   );
 }
-
-
-
-
-
