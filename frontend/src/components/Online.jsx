@@ -14,7 +14,7 @@ import {
 import { useFirebase } from "../context/User";
 import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 
-const socket = io("https://chess-app-b7dl.onrender.com", {
+const socket = io("https://chess-app-1.onrender.com", {
   transports: ["websocket"],
 });
 
